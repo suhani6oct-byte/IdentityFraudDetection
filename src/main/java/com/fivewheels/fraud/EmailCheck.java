@@ -86,7 +86,7 @@ public class EmailCheck {
         if (email == null || email.isBlank()
                 || !EMAIL_PATTERN.matcher(email.trim()).matches()) {
             findings.add("Invalid email format");
-            return new Result(40, findings);
+            return new Result(35, findings);
         }
 
         String normalized = email.trim().toLowerCase(Locale.ROOT);
@@ -95,7 +95,7 @@ public class EmailCheck {
         String domain = parts[1];
 
         if (disposableDomains.contains(domain)) {
-            score += 35;
+            score += 30;
             findings.add("Disposable email domain");
         }
 

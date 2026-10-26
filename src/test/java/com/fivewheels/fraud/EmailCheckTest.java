@@ -13,7 +13,7 @@ class EmailCheckTest {
     void invalidEmailGets40RiskPoints() {
         EmailCheck.Result result = emailCheck.check("not-an-email");
 
-        assertEquals(40, result.getScore());
+        assertEquals(35, result.getScore());
         assertTrue(result.getFindings().contains("Invalid email format"));
     }
 
@@ -21,14 +21,14 @@ class EmailCheckTest {
     void nullEmailIsInvalid() {
         EmailCheck.Result result = emailCheck.check(null);
 
-        assertEquals(40, result.getScore());
+        assertEquals(35, result.getScore());
     }
 
     @Test
     void disposableEmailGets35RiskPoints() {
         EmailCheck.Result result = emailCheck.check("person@mailinator.com");
 
-        assertEquals(35, result.getScore());
+        assertEquals(30, result.getScore());
         assertTrue(result.getFindings().contains("Disposable email domain"));
     }
 
