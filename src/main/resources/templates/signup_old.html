@@ -1,0 +1,46 @@
+document.getElementById("signupForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+
+    const requestData = {
+        fullName: form.querySelector('[name="fullName"]').value.trim(),
+        email: form.querySelector('[name="email"]').value.trim(),
+        phone: form.querySelector('[name="phone"]').value.trim(),
+        ipAddress: ""
+    };
+
+    try {
+        const response = await fetch("/api/verify", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        const responseText = await response.text();
+        let result;
+
+        try {
+            result = responseText ? JSON.parse(responseText) : {};
+        } catch {
+            result = { message: responseText };
+        }
+
+        if (!response.ok) {
+            alert(
+                "Verification failed (" + response.status + "): " +
+                (result.message || responseText || "Please try again.")
+            );
+            return;
+        }
+
+        sessionStorage.setItem("verificationResult", JSON.stringify(result));
+        window.location.href = "/dashboard";
+
+    } catch (error) {
+        console.error("Verification error:", error);
+        alert("Could not connect to the verification service. Make sure Spring Boot is running.");
+    }
+});

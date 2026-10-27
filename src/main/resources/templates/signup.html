@@ -1,46 +1,99 @@
-document.getElementById("signupForm").addEventListener("submit", async function (event) {
-    event.preventDefault();
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Demo Signup</title>
+    <style>
+        :root { --bg:#f6f7f9; --card:#fff; --text:#1c2430; --muted:#667085; --line:#d0d5dd;
+                --ok:#12805c; --okbg:#e3f6ee; --warn:#a15c00; --warnbg:#fff1d6; --bad:#b42318; --badbg:#fde7e4; }
+        @media (prefers-color-scheme: dark) {
+            :root { --bg:#12161c; --card:#1b212a; --text:#e8ecf2; --muted:#9aa4b2; --line:#2b3340;
+                    --ok:#4cd6a0; --okbg:#12332a; --warn:#f5b84b; --warnbg:#3a2c0c; --bad:#ff8b80; --badbg:#3d1714; }
+        }
+        body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--text); }
+        main { max-width: 440px; margin: 0 auto; padding: 32px 16px; }
+        form, #result { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; }
+        label { display:block; font-size:13px; color:var(--muted); margin:12px 0 4px; }
+        input { width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; font-size:15px; background:transparent; color:var(--text); }
+        button { margin-top:18px; width:100%; padding:11px; border:0; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; background:var(--text); color:var(--bg); }
+        #result { margin-top:16px; display:none; }
+        .APPROVE { color:var(--ok); } .REVIEW { color:var(--warn); } .BLOCK { color:var(--bad); }
+        ul { padding-left:18px; color:var(--muted); font-size:14px; }
+        /* The honeypot: invisible to humans, bots fill it anyway */
+        .hp { position:absolute; left:-9999px; top:-9999px; height:0; width:0; overflow:hidden; }
+        a { color: var(--muted); font-size: 14px; }
+    </style>
+</head>
+<body>
+<main>
+    <h2>Create account</h2>
+    <p><a href="/dashboard">&larr; Back to dashboard</a></p>
+    <form id="f" autocomplete="off">
+        <label for="fullName">Full name</label>
+        <input id="fullName" name="fullName" required>
+        <label for="email">Email</label>
+        <input id="email" name="email" required>
+        <label for="phone">Phone</label>
+        <input id="phone" name="phone">
 
-    const form = event.currentTarget;
+        <!-- HONEYPOT: humans cannot see this field -->
+        <div class="hp" aria-hidden="true">
+            <label for="website">Website</label>
+            <input id="website" name="website" tabindex="-1" autocomplete="off">
+        </div>
 
-    const requestData = {
-        fullName: form.querySelector('[name="fullName"]').value.trim(),
-        email: form.querySelector('[name="email"]').value.trim(),
-        phone: form.querySelector('[name="phone"]').value.trim(),
-        ipAddress: ""
-    };
+        <button type="submit">Sign up</button>
+    </form>
 
-    try {
-        const response = await fetch("/api/verify", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(requestData)
-        });
+    <div id="result">
+        <h3 id="decision"></h3>
+        <div id="score"></div>
+        <ul id="reasons"></ul>
+    </div>
+</main>
 
-        const responseText = await response.text();
-        let result;
+<script>
+    // 1. Start the stopwatch when the page opens (fill time = bot signal)
+    const openedAt = Date.now();
 
+    // 2. Simple "device fingerprint": a random id remembered by this browser
+    function deviceId() {
         try {
-            result = responseText ? JSON.parse(responseText) : {};
-        } catch {
-            result = { message: responseText };
-        }
-
-        if (!response.ok) {
-            alert(
-                "Verification failed (" + response.status + "): " +
-                (result.message || responseText || "Please try again.")
-            );
-            return;
-        }
-
-        sessionStorage.setItem("verificationResult", JSON.stringify(result));
-        window.location.href = "/dashboard";
-
-    } catch (error) {
-        console.error("Verification error:", error);
-        alert("Could not connect to the verification service. Make sure Spring Boot is running.");
+            let id = localStorage.getItem('deviceId');
+            if (!id) { id = 'dev-' + Math.random().toString(36).slice(2, 12); localStorage.setItem('deviceId', id); }
+            return id;
+        } catch (e) { return 'dev-unknown'; }
     }
-});
+
+    document.getElementById('f').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const f = e.target;
+        const body = {
+            fullName: f.fullName.value,
+            email: f.email.value,
+            phone: f.phone.value,
+            deviceId: deviceId(),
+            formFillTimeMs: Date.now() - openedAt,
+            honeypot: f.website.value
+        };
+        const res = await fetch('/api/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        const box = document.getElementById('result');
+        box.style.display = 'block';
+        if (!res.ok) { document.getElementById('decision').textContent = 'Error'; return; }
+        const d = document.getElementById('decision');
+        d.textContent = data.decision; d.className = data.decision;
+        document.getElementById('score').textContent = 'Risk score: ' + data.riskScore + ' / 100';
+        const ul = document.getElementById('reasons'); ul.innerHTML = '';
+        (data.reasons.length ? data.reasons : ['No suspicious signs found']).forEach(r => {
+            const li = document.createElement('li'); li.textContent = r; ul.appendChild(li);
+        });
+    });
+</script>
+</body>
+</html>
