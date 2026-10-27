@@ -1,5 +1,9 @@
 
-package com.fivewheels.fraud;
+package com.fivewheels.fraud.checks;
+
+import com.fivewheels.fraud.model.CheckResult;
+import com.fivewheels.fraud.model.IdentityRequest;
+import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,10 +14,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-public class EmailCheck {
+@Component
+public class EmailCheck implements FraudCheck {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
         "^[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]*[A-Z0-9])?(?:\\.[A-Z0-9](?:[A-Z0-9-]*[A-Z0-9])?)+$",
@@ -30,10 +35,10 @@ public class EmailCheck {
         this.disposableDomains = loadDisposableDomains();
     }
 
-    // Package-private constructor makes tests independent of the resource file.
     EmailCheck(Set<String> disposableDomains) {
         this.disposableDomains = disposableDomains.stream()
-            .map(domain -> domain.trim().toLowerCase(Locale.ROOT))
+            .map(String::trim)
+            .map(domain -> domain.toLowerCase(Locale.ROOT))
             .collect(Collectors.toUnmodifiableSet());
     }
 
@@ -61,32 +66,17 @@ public class EmailCheck {
         }
     }
 
-    public static class Result {
-        private final int score;
-        private final List<String> findings;
-
-        public Result(int score, List<String> findings) {
-            this.score = Math.min(score, 100);
-            this.findings = List.copyOf(findings);
-        }
-
-        public int getScore() {
-            return score;
-        }
-
-        public List<String> getFindings() {
-            return findings;
-        }
-    }
-
-    public Result check(String email) {
+    @Override
+    public CheckResult check(IdentityRequest request) {
         List<String> findings = new ArrayList<>();
         int score = 0;
+
+        String email = request == null ? null : request.getEmail();
 
         if (email == null || email.isBlank()
                 || !EMAIL_PATTERN.matcher(email.trim()).matches()) {
             findings.add("Invalid email format");
-            return new Result(40, findings);
+            return toCheckResult(35, findings);
         }
 
         String normalized = email.trim().toLowerCase(Locale.ROOT);
@@ -95,7 +85,7 @@ public class EmailCheck {
         String domain = parts[1];
 
         if (disposableDomains.contains(domain)) {
-            score += 35;
+            score += 30;
             findings.add("Disposable email domain");
         }
 
@@ -109,7 +99,15 @@ public class EmailCheck {
             findings.add("Random-looking email username");
         }
 
-        return new Result(score, findings);
+        return toCheckResult(score, findings);
+    }
+
+    private CheckResult toCheckResult(int score, List<String> findings) {
+        String reason = findings.isEmpty()
+            ? "No email fraud indicators detected"
+            : String.join("; ", findings);
+
+        return new CheckResult("EmailCheck", score, reason);
     }
 
     private boolean looksRandom(String local) {
@@ -121,6 +119,7 @@ public class EmailCheck {
         long digits = local.chars().filter(Character::isDigit).count();
 
         return letters > 0 && (digits >= 4
-            || (local.matches(".*[a-zA-Z].*") && local.matches(".*\\d.*")));
+            || (local.matches(".*[a-zA-Z].*")
+                && local.matches(".*\\d.*")));
     }
 }
