@@ -45,7 +45,7 @@ public int calculateRiskScore(List<CheckResult> results) {
 public String getDecision(int score) {
     if (score < 30) {
         return "APPROVE";
-    } else if (score < 60) {
+    } else if (score < 45) {
         return "REVIEW";
     } else {
         return "BLOCK";
