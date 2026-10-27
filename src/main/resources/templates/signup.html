@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -535,9 +534,13 @@
                     <p>Enter your details to create an account.</p>
                 </div>
 
-                <form id="signupForm" action="/signup" method="post">
+                <!--
+                    TEAM NOTE: action must match the POST URL in VerifyController.
+                    Every name="..." below must match a field in SignupRequest.
+                -->
+                <form id="signupForm" action="/verify" method="post">
 
-                    <!-- Hidden honeypot for server-side bot detection -->
+                    <!-- Bot signal 1: hidden honeypot. Real users never see or fill it. -->
                     <div class="honeypot" aria-hidden="true">
                         <label for="website">Leave this field empty</label>
 
@@ -549,11 +552,18 @@
                             autocomplete="off">
                     </div>
 
-                    <!-- Timestamp for server-side bot scoring -->
+                    <!-- Bot signal 2: time the form was loaded (milliseconds).
+                         The server compares it with its own submit time. -->
                     <input
                         type="hidden"
-                        id="formLoadTime"
-                        name="formLoadTime">
+                        id="formLoadedAt"
+                        name="formLoadedAt">
+
+                    <!-- Basic device details, used by BotCheck / DuplicateCheck -->
+                    <input
+                        type="hidden"
+                        id="deviceInfo"
+                        name="deviceInfo">
 
                     <div class="field">
                         <label for="fullName">Full name</label>
@@ -583,6 +593,22 @@
                                 name="email"
                                 placeholder="you@example.com"
                                 autocomplete="email"
+                                required>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="phone">Phone number</label>
+
+                        <div class="input-wrap">
+                            <span class="input-icon" aria-hidden="true">☎</span>
+
+                            <input
+                                type="tel"
+                                id="phone"
+                                name="phone"
+                                placeholder="Enter your phone number"
+                                autocomplete="tel"
                                 required>
                         </div>
                     </div>
@@ -640,9 +666,13 @@
     </footer>
 
     <script>
-        // Record when the signup form loads.
+        // Record when the form loaded (milliseconds since 1970).
         // The server must validate this value before using it for bot scoring.
-        document.getElementById("formLoadTime").value = Date.now();
+        document.getElementById("formLoadedAt").value = Date.now();
+
+        // Basic device details: browser string plus screen size.
+        document.getElementById("deviceInfo").value =
+            navigator.userAgent + " | " + screen.width + "x" + screen.height;
 
         // Toggle password visibility.
         document.querySelectorAll(".toggle-password").forEach(button => {
@@ -663,4 +693,3 @@
 
 </body>
 </html>
-
