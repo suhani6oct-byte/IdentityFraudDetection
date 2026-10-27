@@ -23,6 +23,21 @@
         /* The honeypot: invisible to humans, bots fill it anyway */
         .hp { position:absolute; left:-9999px; top:-9999px; height:0; width:0; overflow:hidden; }
         a { color: var(--muted); font-size: 14px; }
+        /* ---- Pink theme ---- */
+:root {
+  --bg:#ffe4f1; --card:#ffffff; --text:#4a1d3d; --muted:#9d5c86; --line:#f5b8d6;
+  --ok:#0f9d6b; --warn:#c2680a; --bad:#d6246e;
+}
+body { background: linear-gradient(135deg, #ffd1e8, #e9d5ff 55%, #c7f0ff) fixed; }
+h2 { color:#c2185b; }
+form, #result {
+  border:2px solid #f9a8d4; border-radius:18px;
+  box-shadow:0 8px 24px rgba(236,72,153,.18);
+}
+input { background:#fff; color:#4a1d3d; border-color:#f5b8d6; }
+input:focus { outline:2px solid #ec4899; }
+button { background:linear-gradient(90deg, #ec4899, #a855f7); color:#fff; }
+a { color:#c2185b; }
     </style>
 </head>
 <body>
