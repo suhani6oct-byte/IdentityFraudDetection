@@ -14,7 +14,6 @@ public class VerificationService {
 
 
 private final RiskEngine riskEngine;
-
 public VerificationService(RiskEngine riskEngine) {
     this.riskEngine = riskEngine;
 }
