@@ -1,12 +1,139 @@
+```html
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Fraud Detection Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identity Fraud Detection Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f3ff;
+            margin: 0;
+            padding: 40px 20px;
+            color: #25213b;
+        }
+
+        .container {
+            max-width: 750px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            color: #6d45c5;
+        }
+
+        .card {
+            background: #f8f6ff;
+            padding: 18px;
+            margin: 18px 0;
+            border-radius: 10px;
+        }
+
+        .label {
+            font-weight: bold;
+        }
+
+        #decision {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        #results {
+            padding-left: 20px;
+        }
+
+        button {
+            background: #6d45c5;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .notice {
+            color: #777;
+            line-height: 1.5;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Identity Fraud Detection System</h1>
-    <p>Dashboard is loading successfully!</p>
+<div class="container">
+    <h1>Identity Fraud Detection Dashboard</h1>
+    <p>Review the results of your identity verification.</p>
+
+    <div class="card">
+        <p class="label">Risk Score</p>
+        <p id="riskScore">No results available</p>
+
+        <p class="label">Decision</p>
+        <p id="decision">Waiting for verification</p>
+    </div>
+
+    <div class="card">
+        <h2>Verification Checks</h2>
+        <ul id="results">
+            <li>No verification results available yet.</li>
+        </ul>
+    </div>
+
+    <p id="notice" class="notice"></p>
+
+    <button onclick="window.location.href='/signup'">
+        Back to Signup
+    </button>
+</div>
+
+<script>
+    const savedResult = sessionStorage.getItem("verificationResult");
+
+    if (savedResult) {
+        try {
+            const data = JSON.parse(savedResult);
+
+            document.getElementById("riskScore").textContent =
+                data.riskScore ?? "Not provided";
+
+            document.getElementById("decision").textContent =
+                data.decision ?? "Not provided";
+
+            const resultsList = document.getElementById("results");
+            resultsList.replaceChildren();
+
+            if (Array.isArray(data.results) && data.results.length > 0) {
+                data.results.forEach(function (item) {
+                    const li = document.createElement("li");
+
+                    if (typeof item === "string") {
+    li.textContent = item;
+} else {
+    li.textContent =
+        (item.checkName || "Fraud Check") +
+        " — Risk Score: " + (item.riskScore ?? "N/A") +
+        " — Reason: " + (item.reason || "No reason provided");
+}
+
+                    resultsList.appendChild(li);
+                });
+            } else {
+                resultsList.textContent = "No individual checks were returned.";
+            }
+        } catch (error) {
+            document.getElementById("notice").textContent =
+                "The saved verification results could not be read.";
+        }
+    } else {
+        document.getElementById("notice").textContent =
+            "No saved results found. Please complete the signup form first.";
+    }
+</script>
 </body>
 </html>
+
