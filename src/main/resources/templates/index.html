@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Home')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav('home')}"></nav>
+
+<main class="container">
+
+    <header class="hero">
+        <div class="eyebrow">Identity fraud detection</div>
+        <h1>Catch fake identities <span>before</span> they sign up.</h1>
+        <p>Every signup is checked by five fraud modules. Each one adds risk points,
+           and the total decides: approve, review or block, always with the reasons.</p>
+        <div class="actions">
+            <a class="btn btn-primary" th:href="@{/signup}">Try a signup</a>
+            <a class="btn btn-ghost" th:href="@{/dashboard}">Open the dashboard</a>
+        </div>
+        <p class="small muted mt"><b th:text="${total}">0</b> signups checked so far</p>
+    </header>
+
+    <section class="block-section">
+        <h2>How it works</h2>
+        <ol class="steps">
+            <li><b>A signup arrives</b><br><span class="muted small">Name, email, phone, plus hidden signals like how fast the form was filled.</span></li>
+            <li><b>Five checks run</b><br><span class="muted small">Email, bot, phone, duplicate and impersonation checks each look for their own kind of fraud.</span></li>
+            <li><b>Points add up</b><br><span class="muted small">Every suspicious sign has a point value. The total is capped at 100.</span></li>
+            <li><b>A decision is made</b><br><span class="muted small">The result is saved with all its reasons and shown to the admin on the dashboard.</span></li>
+        </ol>
+    </section>
+
+    <section class="block-section">
+        <h2>The decision scale</h2>
+        <div class="scale">
+            <div class="approve">APPROVE<br><span class="small">below <span th:text="${reviewFrom}">30</span></span></div>
+            <div class="review">REVIEW<br><span class="small"><span th:text="${reviewFrom}">30</span> to <span th:text="${blockFrom - 1}">44</span></span></div>
+            <div class="block">BLOCK<br><span class="small"><span th:text="${blockFrom}">45</span> and above</span></div>
+        </div>
+    </section>
+
+    <section class="block-section">
+        <h2>The five modules</h2>
+        <div class="grid grid-4">
+
+            <article class="card">
+                <h3>Email check</h3>
+                <p class="muted small">Catches fake, throw-away and random-looking emails.</p>
+                <ul class="points">
+                    <li><span>Invalid email format</span><b>+35</b></li>
+                    <li><span>Disposable domain (mailinator...)</span><b>+30</b></li>
+                    <li><span>Random-looking username</span><b>+20</b></li>
+                    <li><span>Role address (admin@, support@)</span><b>+15</b></li>
+                </ul>
+            </article>
+
+            <article class="card">
+                <h3>Bot check</h3>
+                <p class="muted small">Catches scripts pretending to be people.</p>
+                <ul class="points">
+                    <li><span>Hidden honeypot field filled</span><b>+60</b></li>
+                    <li><span>Form sent in under 2 seconds</span><b>+40</b></li>
+                    <li><span>Script user-agent (curl, python)</span><b>+40</b></li>
+                    <li><span>Many signups from one IP</span><b>+10 / +30</b></li>
+                    <li><span>Machine-looking name</span><b>+20</b></li>
+                </ul>
+            </article>
+
+            <article class="card">
+                <h3>Phone check</h3>
+                <p class="muted small">Catches invented phone numbers.</p>
+                <ul class="points">
+                    <li><span>Looks fake (9999999999, 9876543210)</span><b>+35</b></li>
+                    <li><span>Wrong length or not a mobile number</span><b>+30</b></li>
+                    <li><span>No phone given</span><b>+5</b></li>
+                </ul>
+            </article>
+
+            <article class="card">
+                <h3>Duplicate check</h3>
+                <p class="muted small">Catches the same value typed into two different fields.</p>
+                <ul class="points">
+                    <li><span>Email and phone are identical</span><b>+50</b></li>
+                    <li><span>Email and name are identical</span><b>+30</b></li>
+                    <li><span>Phone and name are identical</span><b>+30</b></li>
+                </ul>
+            </article>
+
+            <article class="card">
+                <h3>Impersonation check</h3>
+                <p class="muted small">Catches people pretending to be someone else.</p>
+                <ul class="points">
+                    <li><span>Reserved role or famous name</span><b>+100</b></li>
+                    <li><span>Authority word inside the name</span><b>+75</b></li>
+                    <li><span>Typo of a reserved name</span><b>+70 to 80</b></li>
+                    <li><span>Disguised copy of a real user</span><b>+50</b></li>
+                </ul>
+            </article>
+
+        </div>
+    </section>
+
+    <section class="block-section">
+        <div class="card">
+            <h2>Why rules and not machine learning?</h2>
+            <p class="muted">Every decision can be explained in plain words, no training data is needed, and
+               the weights are easy to tune. The design is modular: a machine learning model could be added
+               later as one more module, without changing the others.</p>
+        </div>
+    </section>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<!-- Shared page parts. Every page pulls the head, the top bar and the footer from here. -->
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' | IdentityGuard'">IdentityGuard</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+
+<body>
+
+<nav class="nav" th:fragment="nav(active)">
+    <a class="logo" th:href="@{/}">Identity<b>Guard</b></a>
+    <div class="nav-links">
+        <a th:href="@{/}" th:classappend="${active == 'home'} ? 'active'">Home</a>
+        <a th:href="@{/signup}" th:classappend="${active == 'signup'} ? 'active'">Try signup</a>
+        <a th:href="@{/dashboard}" th:classappend="${active == 'dashboard'} ? 'active'">Dashboard</a>
+    </div>
+</nav>
+
+<footer th:fragment="footer">
+    IdentityGuard &middot; a rule-based identity fraud detection system &middot; every decision comes with reasons
+</footer>
+
+</body>
+</html>

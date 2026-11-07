@@ -1,114 +1,211 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Demo Signup</title>
-    <style>
-        :root { --bg:#f6f7f9; --card:#fff; --text:#1c2430; --muted:#667085; --line:#d0d5dd;
-                --ok:#12805c; --okbg:#e3f6ee; --warn:#a15c00; --warnbg:#fff1d6; --bad:#b42318; --badbg:#fde7e4; }
-        @media (prefers-color-scheme: dark) {
-            :root { --bg:#12161c; --card:#1b212a; --text:#e8ecf2; --muted:#9aa4b2; --line:#2b3340;
-                    --ok:#4cd6a0; --okbg:#12332a; --warn:#f5b84b; --warnbg:#3a2c0c; --bad:#ff8b80; --badbg:#3d1714; }
-        }
-        body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--text); }
-        main { max-width: 440px; margin: 0 auto; padding: 32px 16px; }
-        form, #result { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; }
-        label { display:block; font-size:13px; color:var(--muted); margin:12px 0 4px; }
-        input { width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; font-size:15px; background:transparent; color:var(--text); }
-        button { margin-top:18px; width:100%; padding:11px; border:0; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; background:var(--text); color:var(--bg); }
-        #result { margin-top:16px; display:none; }
-        .APPROVE { color:var(--ok); } .REVIEW { color:var(--warn); } .BLOCK { color:var(--bad); }
-        ul { padding-left:18px; color:var(--muted); font-size:14px; }
-        /* The honeypot: invisible to humans, bots fill it anyway */
-        .hp { position:absolute; left:-9999px; top:-9999px; height:0; width:0; overflow:hidden; }
-        a { color: var(--muted); font-size: 14px; }
-        /* ---- Pink theme ---- */
-:root {
-  --bg:#ffe4f1; --card:#ffffff; --text:#4a1d3d; --muted:#9d5c86; --line:#f5b8d6;
-  --ok:#0f9d6b; --warn:#c2680a; --bad:#d6246e;
-}
-body { background: linear-gradient(135deg, #ffd1e8, #e9d5ff 55%, #c7f0ff) fixed; }
-h2 { color:#c2185b; }
-form, #result {
-  border:2px solid #f9a8d4; border-radius:18px;
-  box-shadow:0 8px 24px rgba(236,72,153,.18);
-}
-input { background:#fff; color:#4a1d3d; border-color:#f5b8d6; }
-input:focus { outline:2px solid #ec4899; }
-button { background:linear-gradient(90deg, #ec4899, #a855f7); color:#fff; }
-a { color:#c2185b; }
-    </style>
-</head>
+<head th:replace="~{fragments/layout :: head('Try a signup')}"></head>
 <body>
-<main>
-    <h2>Create account</h2>
-    <p><a href="/dashboard">&larr; Back to dashboard</a></p>
-    <form id="f" autocomplete="off">
-        <label for="fullName">Full name</label>
-        <input id="fullName" name="fullName" required>
-        <label for="email">Email</label>
-        <input id="email" name="email" required>
-        <label for="phone">Phone</label>
-        <input id="phone" name="phone">
+<nav th:replace="~{fragments/layout :: nav('signup')}"></nav>
 
-        <!-- HONEYPOT: humans cannot see this field -->
-        <div class="hp" aria-hidden="true">
-            <label for="website">Website</label>
-            <input id="website" name="website" tabindex="-1" autocomplete="off">
+<main class="container">
+
+    <div class="page-head">
+        <div>
+            <h1>Try a signup</h1>
+            <p class="muted">Fill in the form like a visitor would. The fraud checks run the moment you press the button.</p>
         </div>
+    </div>
 
-        <button type="submit">Sign up</button>
-    </form>
+    <div class="signup-layout">
 
-    <div id="result">
-        <h3 id="decision"></h3>
-        <div id="score"></div>
-        <ul id="reasons"></ul>
+        <!-- ================= the form ================= -->
+        <section class="card">
+            <h2>Create your account</h2>
+
+            <form id="signupForm" autocomplete="off">
+
+                <!-- Bot signal: a hidden field. People never see it, scripts fill every field. -->
+                <div class="honeypot" aria-hidden="true">
+                    <label for="website">Leave this field empty</label>
+                    <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                </div>
+
+                <div class="field">
+                    <label for="fullName">Full name</label>
+                    <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required>
+                </div>
+
+                <div class="field">
+                    <label for="email">Email address</label>
+                    <!-- type=text on purpose: a badly typed email must reach the server so it can be scored -->
+                    <input type="text" id="email" name="email" placeholder="you@example.com" required>
+                </div>
+
+                <div class="field">
+                    <label for="phone">Phone number</label>
+                    <input type="text" id="phone" name="phone" placeholder="10-digit mobile number">
+                </div>
+
+                <button class="btn btn-primary" type="submit" id="submitBtn">Create account</button>
+            </form>
+
+            <p class="hint"><b>Demo cases:</b> click one to fill the form, then press the button.</p>
+            <div class="chips">
+                <button type="button" class="chip-btn" data-demo="normal">Normal person</button>
+                <button type="button" class="chip-btn" data-demo="fakeEmail">Fake email</button>
+                <button type="button" class="chip-btn" data-demo="fakePhone">Fake phone</button>
+                <button type="button" class="chip-btn" data-demo="both">Fake email + phone</button>
+                <button type="button" class="chip-btn" data-demo="support">Official-sounding name</button>
+                <button type="button" class="chip-btn" data-demo="lookalike">Look-alike of a real user</button>
+                <button type="button" class="chip-btn" data-demo="sameValue">Same value twice</button>
+                <button type="button" class="chip-btn" data-demo="bot">Simulate a bot</button>
+            </div>
+        </section>
+
+        <!-- ================= the result ================= -->
+        <section class="card" aria-live="polite">
+            <h2>Result</h2>
+            <p class="muted" id="placeholder">Your result will appear here, with the reason from every check.</p>
+
+            <div id="result" hidden>
+                <span class="pill big" id="decision">APPROVE</span>
+                <div class="score-line">
+                    <div class="track"><div class="fill" id="scoreFill"></div></div>
+                    <b id="scoreText">0 / 100</b>
+                </div>
+                <div id="checks"></div>
+                <p class="mt"><a id="caseLink" href="#" class="btn btn-ghost">Open this case on the dashboard</a></p>
+            </div>
+
+            <div id="errorBox" class="error-box" hidden></div>
+        </section>
+
     </div>
 </main>
 
-<script>
-    // 1. Start the stopwatch when the page opens (fill time = bot signal)
-    const openedAt = Date.now();
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 
-    // 2. Simple "device fingerprint": a random id remembered by this browser
+<script th:inline="javascript">
+    // The SERVER stamped the moment this page was opened, so the bot check never depends on the visitor's clock.
+    const formLoadedAt = /*[[${formLoadedAt}]]*/ 0;
+
+    // A simple device id remembered by this browser.
     function deviceId() {
         try {
             let id = localStorage.getItem('deviceId');
-            if (!id) { id = 'dev-' + Math.random().toString(36).slice(2, 12); localStorage.setItem('deviceId', id); }
+            if (!id) {
+                id = 'dev-' + Math.random().toString(36).slice(2, 12);
+                localStorage.setItem('deviceId', id);
+            }
             return id;
-        } catch (e) { return 'dev-unknown'; }
+        } catch (e) {
+            return 'dev-unknown';
+        }
     }
 
-    document.getElementById('f').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const f = e.target;
-        const body = {
-            fullName: f.fullName.value,
-            email: f.email.value,
-            phone: f.phone.value,
-            deviceId: deviceId(),
-            formFillTimeMs: Date.now() - openedAt,
-            honeypot: f.website.value
-        };
-        const res = await fetch('/api/verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-        const data = await res.json();
-        const box = document.getElementById('result');
-        box.style.display = 'block';
-        if (!res.ok) { document.getElementById('decision').textContent = 'Error'; return; }
-        const d = document.getElementById('decision');
-        d.textContent = data.decision; d.className = data.decision;
-        document.getElementById('score').textContent = 'Risk score: ' + data.riskScore + ' / 100';
-        const ul = document.getElementById('reasons'); ul.innerHTML = '';
-        (data.reasons.length ? data.reasons : ['No suspicious signs found']).forEach(r => {
-            const li = document.createElement('li'); li.textContent = r; ul.appendChild(li);
+    // ---------- one-click demo cases ----------
+    const demos = {
+        normal:    { fullName: 'Arvind Kulkarni', email: 'arvind.kulkarni@gmail.com', phone: '9371846205' },
+        fakeEmail: { fullName: 'Neeraj Bhatt', email: 'xk2901fj@mailinator.com', phone: '9371846205' },
+        fakePhone: { fullName: 'Karthik Rao', email: 'karthik.rao@gmail.com', phone: '9999999999' },
+        both:      { fullName: 'Neeraj Bhatt', email: 'xk2901fj@mailinator.com', phone: '9999999999' },
+        support:   { fullName: 'Customer Support', email: 'contact.us@gmail.com', phone: '8605173942' },
+        lookalike: { fullName: 'Rahu1 Sharrna', email: 'rahu1.sharrna@gmail.com', phone: '9712648350' },
+        sameValue: { fullName: 'sam.rivera@gmail.com', email: 'sam.rivera@gmail.com', phone: '9830174526' },
+        bot:       { fullName: 'Arvind Kulkarni', email: 'arvind.kulkarni@gmail.com', phone: '9371846205', honeypot: 'http://spam.example' }
+    };
+
+    document.querySelectorAll('.chip-btn').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const d = demos[button.dataset.demo];
+            document.getElementById('fullName').value = d.fullName;
+            document.getElementById('email').value = d.email;
+            document.getElementById('phone').value = d.phone;
+            // "Simulate a bot" fills the hidden field, just like a script would
+            document.getElementById('website').value = d.honeypot || '';
         });
     });
+
+    // ---------- send the signup to the fraud engine ----------
+    function show(id, visible) {
+        document.getElementById(id).hidden = !visible;
+    }
+
+    document.getElementById('signupForm').addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const form = event.target;
+        const button = document.getElementById('submitBtn');
+        button.disabled = true;
+        show('errorBox', false);
+
+        const body = {
+            fullName: form.fullName.value,
+            email: form.email.value,
+            phone: form.phone.value,
+            deviceId: deviceId(),
+            formLoadedAt: formLoadedAt,
+            honeypot: form.website.value
+        };
+
+        try {
+            const response = await fetch('/api/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!response.ok) {
+                throw new Error('The server answered with status ' + response.status);
+            }
+            render(await response.json());
+        } catch (error) {
+            const box = document.getElementById('errorBox');
+            box.textContent = 'Could not reach the fraud engine. Is the application running? (' + error.message + ')';
+            show('errorBox', true);
+        } finally {
+            button.disabled = false;
+        }
+    });
+
+    function render(data) {
+        const decisionClass = String(data.decision).toLowerCase();
+
+        show('placeholder', false);
+        show('result', true);
+
+        const pill = document.getElementById('decision');
+        pill.textContent = data.decision;
+        pill.className = 'pill big ' + decisionClass;
+
+        const fill = document.getElementById('scoreFill');
+        fill.className = 'fill ' + decisionClass;
+        fill.style.width = Math.min(100, data.riskScore) + '%';
+        document.getElementById('scoreText').textContent = data.riskScore + ' / 100';
+
+        // one line per check: the ones that found something first
+        const box = document.getElementById('checks');
+        box.replaceChildren();
+        const results = (data.results || []).slice().sort(function (a, b) { return b.riskScore - a.riskScore; });
+        results.forEach(function (item) {
+            const row = document.createElement('div');
+            row.className = item.riskScore > 0 ? 'result-check' : 'result-check quiet';
+
+            const top = document.createElement('div');
+            top.className = 'top';
+            const name = document.createElement('span');
+            name.textContent = item.checkName;
+            const points = document.createElement('span');
+            points.textContent = item.riskScore > 0 ? '+' + item.riskScore : 'clear';
+            top.appendChild(name);
+            top.appendChild(points);
+
+            const reason = document.createElement('div');
+            reason.className = 'small muted';
+            reason.textContent = item.reason;
+
+            row.appendChild(top);
+            row.appendChild(reason);
+            box.appendChild(row);
+        });
+
+        document.getElementById('caseLink').href = '/dashboard/' + data.id;
+    }
 </script>
 </body>
 </html>
