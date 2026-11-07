@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Signup details')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav('dashboard')}"></nav>
+
+<main class="container">
+
+    <div class="page-head">
+        <div>
+            <a class="small" th:href="@{/dashboard}">&larr; Back to the dashboard</a>
+            <h1>Signup <span th:text="'#' + ${r.id}">#1</span></h1>
+            <p class="muted small" th:text="${r.createdAtDisplay}">time</p>
+        </div>
+    </div>
+
+    <div class="grid grid-2">
+
+        <!-- ================= the verdict ================= -->
+        <section class="card">
+            <h2>Verdict</h2>
+            <div class="verdict">
+                <div class="ring" th:classappend="${r.decisionClass}" th:style="'--deg:' + ${r.riskDegrees} + 'deg'">
+                    <div><span><b th:text="${r.riskScore}">0</b><small>of 100</small></span></div>
+                </div>
+                <div>
+                    <span class="pill big" th:classappend="${r.decisionClass}" th:text="${r.decision}">APPROVE</span>
+                    <p class="muted small mt">
+                        Below <span th:text="${reviewFrom}">30</span> is approved.
+                        From <span th:text="${reviewFrom}">30</span> to <span th:text="${blockFrom - 1}">59</span> a human reviews it.
+                        <span th:text="${blockFrom}">60</span> and above is blocked.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= who ================= -->
+        <section class="card">
+            <h2>The signup</h2>
+            <dl class="kv">
+                <dt>Name</dt><dd th:text="${r.fullName}">Name</dd>
+                <dt>Email</dt><dd th:text="${r.email}">email</dd>
+                <dt>Phone</dt><dd th:text="${r.phone}">phone</dd>
+                <dt>IP address</dt><dd th:text="${r.ipAddress}">ip</dd>
+                <dt>Device</dt><dd th:text="${r.deviceId}">device</dd>
+                <dt>Browser</dt><dd th:text="${r.userAgent}">browser</dd>
+            </dl>
+        </section>
+
+        <!-- ================= every check ================= -->
+        <section class="card">
+            <h2>What each check found</h2>
+            <div class="check-card" th:each="c : ${r.results}" th:classappend="${c.riskScore == 0} ? 'quiet'">
+                <div class="top">
+                    <span th:text="${c.checkName}">Check</span>
+                    <span th:text="${c.riskScore > 0} ? ('+' + ${c.riskScore} + ' points') : 'clear'">+10 points</span>
+                </div>
+                <div class="small" th:text="${c.reason}">reason</div>
+            </div>
+        </section>
+
+        <!-- ================= the admin's word ================= -->
+        <section class="card">
+            <h2>Admin review</h2>
+
+            <p class="muted" th:if="${r.decision == 'APPROVE'}">
+                This signup was approved automatically. No review is needed.
+            </p>
+
+            <div th:if="${r.decision != 'APPROVE'}">
+                <p>Status:
+                    <span class="status" th:classappend="${r.reviewStatus}" th:text="${r.reviewStatus}">PENDING</span>
+                </p>
+                <p class="muted small">
+                    Approve it if this is a real person, or reject it to confirm it is fraud.
+                    Approved people are also trusted when later signups are compared with them.
+                </p>
+                <div class="review-actions">
+                    <form th:action="@{/dashboard/{id}/review(id=${r.id})}" method="post">
+                        <input type="hidden" name="action" value="approve">
+                        <button class="btn btn-good" type="submit">Real person: approve</button>
+                    </form>
+                    <form th:action="@{/dashboard/{id}/review(id=${r.id})}" method="post">
+                        <input type="hidden" name="action" value="reject">
+                        <button class="btn btn-bad" type="submit">Fraud: reject</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

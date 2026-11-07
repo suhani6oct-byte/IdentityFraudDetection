@@ -1,139 +1,120 @@
-```html
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Identity Fraud Detection Dashboard</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f3ff;
-            margin: 0;
-            padding: 40px 20px;
-            color: #25213b;
-        }
-
-        .container {
-            max-width: 750px;
-            margin: auto;
-            background: white;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-        }
-
-        h1 {
-            color: #6d45c5;
-        }
-
-        .card {
-            background: #f8f6ff;
-            padding: 18px;
-            margin: 18px 0;
-            border-radius: 10px;
-        }
-
-        .label {
-            font-weight: bold;
-        }
-
-        #decision {
-            font-size: 22px;
-            font-weight: bold;
-        }
-
-        #results {
-            padding-left: 20px;
-        }
-
-        button {
-            background: #6d45c5;
-            color: white;
-            border: none;
-            padding: 12px 18px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .notice {
-            color: #777;
-            line-height: 1.5;
-        }
-    </style>
-</head>
-
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
 <body>
-<div class="container">
-    <h1>Identity Fraud Detection Dashboard</h1>
-    <p>Review the results of your identity verification.</p>
+<nav th:replace="~{fragments/layout :: nav('dashboard')}"></nav>
 
-    <div class="card">
-        <p class="label">Risk Score</p>
-        <p id="riskScore">No results available</p>
+<main class="container">
 
-        <p class="label">Decision</p>
-        <p id="decision">Waiting for verification</p>
+    <div class="page-head">
+        <div>
+            <h1>Dashboard</h1>
+            <p class="muted">Every signup, its risk score and exactly why it was flagged.</p>
+        </div>
+        <a class="btn btn-primary" th:href="@{/signup}">+ Try a signup</a>
     </div>
 
-    <div class="card">
-        <h2>Verification Checks</h2>
-        <ul id="results">
-            <li>No verification results available yet.</li>
-        </ul>
+    <!-- ================= numbers ================= -->
+    <div class="grid grid-stats">
+        <a class="stat" th:href="@{/dashboard}"><b th:text="${total}">0</b><span>All signups</span></a>
+        <a class="stat approve" th:href="@{/dashboard(filter='approve')}"><b th:text="${approved}">0</b><span>Approved</span></a>
+        <a class="stat review" th:href="@{/dashboard(filter='review')}"><b th:text="${review}">0</b><span>Sent to review</span></a>
+        <a class="stat block" th:href="@{/dashboard(filter='block')}"><b th:text="${blocked}">0</b><span>Blocked</span></a>
+        <a class="stat" th:href="@{/dashboard(filter='pending')}"><b th:text="${pending}">0</b><span>Waiting for a human</span></a>
+        <div class="stat"><b th:text="${avgScore}">0</b><span>Average risk score</span></div>
     </div>
 
-    <p id="notice" class="notice"></p>
+    <!-- ================= charts ================= -->
+    <div class="grid grid-2 mt">
+        <section class="card">
+            <h2>How signups were decided</h2>
+            <div class="stack">
+                <div class="seg approve" th:style="'width:' + ${pctApprove} + '%'"></div>
+                <div class="seg review" th:style="'width:' + ${pctReview} + '%'"></div>
+                <div class="seg block" th:style="'width:' + ${pctBlock} + '%'"></div>
+            </div>
+            <div class="legend">
+                <span>Approved <b th:text="${pctApprove} + '%'">0%</b></span>
+                <span>Review <b th:text="${pctReview} + '%'">0%</b></span>
+                <span>Blocked <b th:text="${pctBlock} + '%'">0%</b></span>
+            </div>
+        </section>
 
-    <button onclick="window.location.href='/signup'">
-        Back to Signup
-    </button>
-</div>
+        <section class="card">
+            <h2>Which check catches the most</h2>
+            <div class="bar-row" th:each="b : ${bars}">
+                <span th:text="${b.label}">Check</span>
+                <div class="bar-track"><div class="bar-fill" th:style="'width:' + ${b.width} + '%'"></div></div>
+                <b th:text="${b.count}">0</b>
+            </div>
+        </section>
+    </div>
 
-<script>
-    const savedResult = sessionStorage.getItem("verificationResult");
+    <!-- ================= filters ================= -->
+    <div class="toolbar">
+        <div class="tabs">
+            <a th:href="@{/dashboard}" th:classappend="${filter == 'all'} ? 'active'">All</a>
+            <a th:href="@{/dashboard(filter='approve')}" th:classappend="${filter == 'approve'} ? 'active'">Approved</a>
+            <a th:href="@{/dashboard(filter='review')}" th:classappend="${filter == 'review'} ? 'active'">Review</a>
+            <a th:href="@{/dashboard(filter='block')}" th:classappend="${filter == 'block'} ? 'active'">Blocked</a>
+            <a th:href="@{/dashboard(filter='pending')}" th:classappend="${filter == 'pending'} ? 'active'">Needs a human</a>
+        </div>
+        <form class="search" th:action="@{/dashboard}" method="get">
+            <input type="hidden" name="filter" th:value="${filter}">
+            <input type="text" name="q" th:value="${q}" placeholder="Search name, email, phone, IP">
+            <button class="btn btn-ghost" type="submit">Search</button>
+        </form>
+    </div>
 
-    if (savedResult) {
-        try {
-            const data = JSON.parse(savedResult);
+    <!-- ================= the table ================= -->
+    <div class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>When</th>
+                <th>Person</th>
+                <th>Phone / IP</th>
+                <th>Score</th>
+                <th>Decision</th>
+                <th>What was found</th>
+                <th>Review</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${rows}">
+                <td th:text="${r.id}">1</td>
+                <td class="small" th:text="${r.createdAtDisplay}">time</td>
+                <td>
+                    <b th:text="${r.fullName}">Name</b><br>
+                    <span class="muted small" th:text="${r.email}">email</span>
+                </td>
+                <td>
+                    <span th:text="${r.phone}">phone</span><br>
+                    <span class="muted small" th:text="${r.ipAddress}">ip</span>
+                </td>
+                <td>
+                    <b th:text="${r.riskScore}">0</b>
+                    <div class="meter"><span th:class="${r.decisionClass}" th:style="'width:' + ${r.riskScore} + '%'"></span></div>
+                </td>
+                <td><span class="pill" th:classappend="${r.decisionClass}" th:text="${r.decision}">APPROVE</span></td>
+                <td>
+                    <span class="chip" th:each="c : ${r.triggered}" th:text="${c.checkName} + ' +' + ${c.riskScore}">Check +10</span>
+                    <span class="muted small" th:if="${#lists.isEmpty(r.triggered)}">Nothing suspicious</span>
+                </td>
+                <td>
+                    <span class="status" th:if="${r.reviewStatus != 'NONE'}" th:classappend="${r.reviewStatus}" th:text="${r.reviewStatus}">PENDING</span>
+                </td>
+                <td><a th:href="@{/dashboard/{id}(id=${r.id})}">Details</a></td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="empty" th:if="${#lists.isEmpty(rows)}">No signups match this filter yet.</div>
+    </div>
 
-            document.getElementById("riskScore").textContent =
-                data.riskScore ?? "Not provided";
+</main>
 
-            document.getElementById("decision").textContent =
-                data.decision ?? "Not provided";
-
-            const resultsList = document.getElementById("results");
-            resultsList.replaceChildren();
-
-            if (Array.isArray(data.results) && data.results.length > 0) {
-                data.results.forEach(function (item) {
-                    const li = document.createElement("li");
-
-                    if (typeof item === "string") {
-    li.textContent = item;
-} else {
-    li.textContent =
-        (item.checkName || "Fraud Check") +
-        " — Risk Score: " + (item.riskScore ?? "N/A") +
-        " — Reason: " + (item.reason || "No reason provided");
-}
-
-                    resultsList.appendChild(li);
-                });
-            } else {
-                resultsList.textContent = "No individual checks were returned.";
-            }
-        } catch (error) {
-            document.getElementById("notice").textContent =
-                "The saved verification results could not be read.";
-        }
-    } else {
-        document.getElementById("notice").textContent =
-            "No saved results found. Please complete the signup form first.";
-    }
-</script>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>
-

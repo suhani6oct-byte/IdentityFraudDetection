@@ -1,0 +1,25 @@
+HOW TO RUN (Windows PowerShell)
+================================
+1. Unzip this folder somewhere that is NOT OneDrive, e.g. C:\Users\suhan\Projects\IdentityFraudDetection
+2. Open PowerShell in that folder and run:
+       .\mvnw.cmd spring-boot:run
+   (first time takes a few minutes: it downloads libraries)
+3. Wait for "Started FraudApplication". Then open in your browser:
+       http://localhost:8080/            home
+       http://localhost:8080/signup      signup form (click the pink demo buttons)
+       http://localhost:8080/dashboard   dashboard (already has 28 demo signups)
+4. Stop with Ctrl + C. Data is in memory, so it resets every start (demo data comes back).
+
+"Port 8080 already in use"? A old run is still open. Close that window, or run:
+       .\mvnw.cmd spring-boot:run "-Dspring-boot.run.arguments=--server.port=8081"
+
+DEMO SCRIPT FOR YOUR TEACHER (2 minutes)
+1. /signup -> "Normal person"            -> APPROVE
+2. /signup -> "Fake phone"               -> REVIEW
+3. /signup -> "Fake email + fake phone"  -> BLOCK
+4. /signup -> "Look-alike (Rahu1 Sharrna)" -> BLOCK (impersonation)
+5. /signup -> "Bot"                      -> BLOCK (honeypot)
+6. /dashboard -> show numbers, filter tabs, click a row -> click Approve/Reject on a REVIEW one.
+
+RULES: score < 30 APPROVE, 30-59 REVIEW, 60+ BLOCK (RiskEngine.java).
+Checks: Email, Bot, Phone, Duplicate, Impersonation.
